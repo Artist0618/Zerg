@@ -1,6 +1,8 @@
 <?php
 namespace app\api\service;
 
+use think\Exception;
+
 class UserToken
 {
     protected $code;
@@ -17,6 +19,13 @@ class UserToken
     }
 
     public function get($code){
+        $result = curl_get($this->wxLoginurl);
+        $wxResult = json_decode($result,true);
+        if (empty($wxResult)){
+            throw new Exception('获取session_key及openID时异常，微信内部错误');
+        }
 
     }
+
+
 }
