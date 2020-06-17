@@ -1,6 +1,7 @@
 <?php
 namespace app\api\service;
 
+use app\lib\exception\WeChatException;
 use think\Exception;
 
 class UserToken
@@ -26,11 +27,23 @@ class UserToken
         }else{
             $loginFail = array_key_exists('errcode',$wxResult);
             if($loginFail){
-
+                $this->processLoginError($wxResult);
             }else{
-
+                $this->grantToken($wxResult);
             }
         }
+    }
+
+    private function grantToken($wxResult){
+        $openid = $wxResult['openid'];
+
+    }
+
+    private function processLoginError($wxResult){
+        throw new WeChatException([
+            'msg' => $wxResult['errmsg'],
+            'errorCode' => $wxResult['errcode']
+        ]);
     }
 
 
