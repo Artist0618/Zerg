@@ -22,5 +22,7 @@ class Order extends Controller
     //微信会返回一个支付的结果
     //成功：进行库存量扣除，失败：返回一个支付失败的结果
 
+    public function placeOrder(){
 
+    }
 }
