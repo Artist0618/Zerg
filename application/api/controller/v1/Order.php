@@ -9,9 +9,15 @@
 namespace app\api\controller\v1;
 
 
+use app\api\controller\BaseController;
+use app\api\service\Token as TokenService;
+use app\api\validate\OrderPlace;
+use app\lib\enum\ScopeEnum;
+use app\lib\exception\ForbiddenException;
+use app\lib\exception\TokenException;
 use think\Controller;
 
-class Order extends Controller
+class Order extends BaseController
 {
     //用户在选择商品后，想API提交包含他所选商品的相关信息
     //API在接收到信息后，需要检查订单相关商品的库存量
@@ -22,7 +28,13 @@ class Order extends Controller
     //微信会返回一个支付的结果
     //成功：进行库存量扣除，失败：返回一个支付失败的结果
 
-    public function placeOrder(){
+    protected $beforeActionList = [
+        'checkExclusiveScope' => ['only' => 'placeOrder ']
+    ];
 
+    public function placeOrder(){
+        (new OrderPlace())->goCheck();
+        $products = input('post.products/a');
+        $uid = TokenService::getCurrentUid();
     }
 }
