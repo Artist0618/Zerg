@@ -25,6 +25,10 @@ class Pay
     }
 
     public function pay(){
+        //订单号可能根本不存在
+        //进行库存量检测
+        $orderService = new Order();
+        $status = $orderService->checkOrderStock($this->orderID);
 
     }
 }
