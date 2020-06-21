@@ -33,9 +33,19 @@ class Pay
         //订单号确实存在，但是订单号和当前用户是不匹配的
         //订单有可能已经被支付了
         //进行库存量检测
+        $this->checkOrderValid();
         $orderService = new OrderService();
         $status = $orderService->checkOrderStock($this->orderID);
+        if(!$status['pass']){
+            return $status;
+        }
+    }
 
+    private function makeWxPreOrder(){
+        $openid = Token::getCurrentTokenVar('openid');
+        if(!$openid){
+            throw new TokenException();
+        }
     }
 
     private function checkOrderValid(){
@@ -57,5 +67,7 @@ class Pay
                 'code' => 400
             ]);
         }
+        $this->orderNO = $order->order_no;
+        return true;
     }
 }
