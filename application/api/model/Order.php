@@ -21,4 +21,18 @@ class Order extends BaseModel
             ->paginate($size,true,['page'=>$page]);
         return $pagingData;
     }
+
+    public function getSnapItemsAttr($value){
+        if(empty($value)){
+            return null;
+        }
+        return json_decode($value);
+    }
+
+    public function getSnapAddressAttr($value){
+        if(empty($value)){
+            return null;
+        }
+        return json_decode($value);
+    }
 }

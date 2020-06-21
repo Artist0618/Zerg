@@ -11,10 +11,12 @@ namespace app\api\controller\v1;
 
 use app\api\controller\BaseController;
 use app\api\service\Token as TokenService;
+use app\api\validate\IDMustBePostiveInt;
 use app\api\validate\OrderPlace;
 use app\api\validate\PagingParameter;
 use app\lib\enum\ScopeEnum;
 use app\lib\exception\ForbiddenException;
+use app\lib\exception\OrderException;
 use app\lib\exception\TokenException;
 use think\Controller;
 use app\api\service\Order as OrderService;
@@ -65,7 +67,25 @@ class Order extends BaseController
             'current_page' => $pagingOrders->currentPage(),
             'data' => $data
         ];
+    }
 
+    /**
+     * 获取订单详情
+     * @param $id
+     * @return static
+     * @throws OrderException
+     * @throws \app\lib\exception\ParameterException
+     */
+    public function getDetail($id)
+    {
+        (new IDMustBePostiveInt())->goCheck();
+        $orderDetail = OrderModel::get($id);
+        if (!$orderDetail)
+        {
+            throw new OrderException();
+        }
+        return $orderDetail
+            ->hidden(['prepay_id']);
     }
 
     public function placeOrder(){
