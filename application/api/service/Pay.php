@@ -14,11 +14,16 @@ use app\lib\enum\OrderStatusEnum;
 use app\lib\exception\OrderException;
 use app\lib\exception\TokenException;
 use think\Exception;
+use think\Loader;
+use think\Log;
+
+//extend/WxPay/WxPay.Api.php
+Loader::import('WxPay.WxPay', EXTEND_PATH, '.Api.php');
 
 class Pay
 {
+    private $orderNo;
     private $orderID;
-    private $orderNO;
 
     function __construct($orderID)
     {
@@ -39,13 +44,42 @@ class Pay
         if(!$status['pass']){
             return $status;
         }
+        return $this->makeWxPreOrder($status['orderPrice']);
     }
 
-    private function makeWxPreOrder(){
+    // 构建微信支付订单信息
+    private function makeWxPreOrder($totalPrice)
+    {
         $openid = Token::getCurrentTokenVar('openid');
-        if(!$openid){
+
+        if (!$openid)
+        {
             throw new TokenException();
         }
+        $wxOrderData = new \WxPayUnifiedOrder();
+        $wxOrderData->SetOut_trade_no($this->orderNo);
+        $wxOrderData->SetTrade_type('JSAPI');
+        $wxOrderData->SetTotal_fee($totalPrice * 100);
+        $wxOrderData->SetBody('零食商贩');
+        $wxOrderData->SetOpenid($openid);
+        $wxOrderData->SetNotify_url('http://qq.com');
+
+        return $this->getPaySignature($wxOrderData);
+    }
+
+    private function getPaySignature($wxOrderData){
+        $wxOrder = \WxPayApi::unifiedOrder($wxOrderData);
+        if($wxOrder['return_code'] != 'SUCCESS' || $wxOrder['result_code'] != 'SUCCESS'){
+            Log::record($wxOrder,'error');
+            Log::record('获取预支付订单失败','error');
+        }
+        $this->recordPreOrder($wxOrder);
+        return null;
+    }
+
+    private function recordPreOrder($wxOrder){
+        OrderModel::where('id','=',$this->orderID)
+            ->update(['prepay_id'=>$wxOrder['prepay_id']]);
     }
 
     private function checkOrderValid(){
@@ -67,7 +101,7 @@ class Pay
                 'code' => 400
             ]);
         }
-        $this->orderNO = $order->order_no;
+        $this->orderNo = $order->order_no;
         return true;
     }
 }
