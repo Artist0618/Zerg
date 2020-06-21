@@ -12,11 +12,13 @@ namespace app\api\controller\v1;
 use app\api\controller\BaseController;
 use app\api\service\Token as TokenService;
 use app\api\validate\OrderPlace;
+use app\api\validate\PagingParameter;
 use app\lib\enum\ScopeEnum;
 use app\lib\exception\ForbiddenException;
 use app\lib\exception\TokenException;
 use think\Controller;
 use app\api\service\Order as OrderService;
+use app\api\model\Order as OrderModel;
 
 class Order extends BaseController
 {
@@ -31,8 +33,40 @@ class Order extends BaseController
     //成功：进行库存量扣除，失败：返回一个支付失败的结果
 
     protected $beforeActionList = [
-        'checkExclusiveScope' => ['only' => 'placeOrder ']
+        'checkExclusiveScope' => ['only' => 'placeOrder'],
+        'checkPrimaryScope' => ['only' => 'getDetail,getSummaryByUser'],
     ];
+
+    /**
+     * 根据用户id分页获取订单列表（简要信息）
+     * @param int $page
+     * @param int $size
+     * @return array
+     * @throws \app\lib\exception\ParameterException
+     */
+    public function getSummaryByUser($page = 1, $size = 15)
+    {
+        (new PagingParameter())->goCheck();
+        $uid = TokenService::getCurrentUid();
+        $pagingOrders = OrderModel::getSummaryByUser($uid, $page, $size);
+        if ($pagingOrders->isEmpty())
+        {
+            return [
+                'current_page' => $pagingOrders->currentPage(),
+                'data' => []
+            ];
+        }
+//        $collection = collection($pagingOrders->items());
+//        $data = $collection->hidden(['snap_items', 'snap_address'])
+//            ->toArray();
+        $data = $pagingOrders->hidden(['snap_items', 'snap_address'])
+            ->toArray();
+        return [
+            'current_page' => $pagingOrders->currentPage(),
+            'data' => $data
+        ];
+
+    }
 
     public function placeOrder(){
         (new OrderPlace())->goCheck();
