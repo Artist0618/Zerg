@@ -26,7 +26,23 @@ class Address extends BaseController
         'checkPrimaryScope' => ['only' => 'createOrUpdateAddress']
     ];
 
-
+    /**
+     * 获取用户地址信息
+     * @return UserAddress
+     * @throws UserException
+     */
+    public function getUserAddress(){
+        $uid = Token::getCurrentUid();
+        $userAddress = UserAddress::where('user_id', $uid)
+            ->find();
+        if(!$userAddress){
+            throw new UserException([
+                'msg' => '用户地址不存在',
+                'errorCode' => 60001
+            ]);
+        }
+        return $userAddress;
+    }
 
     public function createOrUpdateAddress(){
         $validate = new AddressNew();
